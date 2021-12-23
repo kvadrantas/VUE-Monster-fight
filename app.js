@@ -7,7 +7,9 @@ const app = Vue.createApp({
         return {
             playerHealth: 100,
             monsterHealth: 100,
-            currentRound: 0
+            currentRound: 0,
+            winner: null,
+            logMessagges: []
         }
     },
     computed: {
@@ -21,24 +23,42 @@ const app = Vue.createApp({
             return this.currentRound % 3 !== 0;
         }
     },
+    watch: {
+        playerHealth(value) {
+            if (value <= 0 && this.monsterHealth <=0) {
+                this.winner = 'draw';
+            } else if (value <= 0) {
+                this.winner = 'monster'
+            }
+        },
+        monsterHealth(value) {
+            if (value <=0 && this.playerHealth <=0) {
+                this.winner = 'draw';
+            } else if (value <=0) {
+                this.winner = 'player'
+            }
+        }
+    },
     methods: {
         attackMonster() {
             this.currentRound++;
             const damageValue = getRandomValue(5, 12);
-            if(this.monsterHealth - damageValue < 0) {
+            if(this.monsterHealth - damageValue <= 0) {
                 this.monsterHealth = 0;
             } else {
                 this.monsterHealth -= damageValue;
             }
+            this.addLogMessage('player', 'attack', damageValue)
             this.attackPlayer();
         },
         attackPlayer() {
             const damageValue = getRandomValue(8, 15);
-            if(this.playerHealth - damageValue < 0) {
+            if(this.playerHealth - damageValue <= 0) {
                 this.playerHealth = 0
             } else {
                 this.playerHealth -= damageValue;
             }
+            this.addLogMessage('monster', 'attack', damageValue)
         },
         healPlayer() {
             this.currentRound++;
@@ -48,12 +68,32 @@ const app = Vue.createApp({
             } else {
                 this.playerHealth += healValue;
             }
+            this.addLogMessage('player', 'heals', healValue)
             this.attackPlayer();
         },
         specialAttackMonster() {
             this.currentRound++;
-            this.monsterHealth -= getRandomValue(10, 25);
+            const damageValue = getRandomValue(10, 25);
+            this.monsterHealth -= damageValue;
+            this.addLogMessage('player', 'special-attack', damageValue)
             this.attackPlayer();
+        },
+        startNewGame() {
+            this.playerHealth = 100;
+            this.monsterHealth = 100;
+            this.currentRound = 0;
+            this.winner = null;
+            this.logMessagges =[];
+        },
+        surrender() {
+            this.winner = 'monster'
+        },
+        addLogMessage(who, what, value) {
+            this.logMessagges.push({
+                actionBy: who,
+                actionType: what,
+                actionValue: value
+            })
         }
     },
 });
